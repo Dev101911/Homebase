@@ -33,6 +33,7 @@ pub struct Agent {
     paths: Paths,
     inner: Mutex<Inner>,
     agent_log: Mutex<LogFile>,
+    login_path: std::sync::OnceLock<Option<String>>,
 }
 
 struct Inner {
@@ -96,6 +97,7 @@ impl Agent {
                 runtimes: HashMap::new(),
             }),
             agent_log,
+            login_path: std::sync::OnceLock::new(),
         });
         agent.refresh_config(&mut lock(&agent.inner));
         agent
@@ -464,6 +466,8 @@ impl Agent {
         cmd.args(&args);
         cmd.cwd(&folder);
         cmd.env("TERM", "xterm-256color");
+        let login_path = self.login_path.get_or_init(claude::login_shell_path);
+        cmd.env("PATH", claude::child_path(&program, login_path.as_deref()));
         cmd.env("HOMEBASE_SERVER_ID", id);
         for (k, v) in &server.env {
             cmd.env(k, v);

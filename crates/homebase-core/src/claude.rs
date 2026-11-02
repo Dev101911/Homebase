@@ -42,6 +42,39 @@ fn from_login_shell() -> Option<PathBuf> {
     is_executable(&path).then_some(path)
 }
 
+/// The PATH a login shell sets up. Apps and launchd start with a minimal
+/// PATH, and claude's sessions need the user's tools (git, node, brew).
+pub fn login_shell_path() -> Option<String> {
+    let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+    let out = Command::new(shell)
+        .args(["-l", "-c", "printf '%s' \"$PATH\""])
+        .stdin(Stdio::null())
+        .stderr(Stdio::null())
+        .output()
+        .ok()?;
+    let path = String::from_utf8_lossy(&out.stdout).trim().to_string();
+    (out.status.success() && !path.is_empty()).then_some(path)
+}
+
+/// `claude`'s own folder first, then the login shell's PATH, then the current one.
+pub fn child_path(claude: &Path, login_path: Option<&str>) -> String {
+    let mut parts: Vec<String> = Vec::new();
+    if let Some(dir) = claude.parent() {
+        parts.push(dir.display().to_string());
+    }
+    let current = std::env::var("PATH").unwrap_or_default();
+    for p in login_path
+        .unwrap_or("")
+        .split(':')
+        .chain(current.split(':'))
+    {
+        if !p.is_empty() && !parts.iter().any(|q| q == p) {
+            parts.push(p.to_string());
+        }
+    }
+    parts.join(":")
+}
+
 fn is_executable(path: &Path) -> bool {
     use std::os::unix::fs::PermissionsExt;
     std::fs::metadata(path)
@@ -192,6 +225,12 @@ mod tests {
             args,
             ["remote-control", "--name", "X", "--spawn", "same-dir"]
         );
+    }
+
+    #[test]
+    fn child_path_dedupes() {
+        let p = child_path(Path::new("/x/bin/claude"), Some("/a:/x/bin:/b"));
+        assert!(p.starts_with("/x/bin:/a:/b"), "{p}");
     }
 
     #[test]

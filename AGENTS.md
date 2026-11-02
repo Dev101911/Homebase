@@ -13,6 +13,9 @@ Gemini and others). For using `hb` rather than changing it, read
   writes logs and serves the Unix socket.
 - `crates/hb`: the CLI. `docs/agent-guide.md` and `docs/skill/SKILL.md` are
   compiled into it (`hb guide`, `hb skill`). Keep them in step with the CLI.
+- `app/`: the SwiftUI menu bar app (a Swift package, macOS 14+). It talks to
+  hbd over the socket and holds no supervision logic. `Scripts/build-app.sh`
+  bundles it with `hb` and `hbd` into `build/Homebase.app`.
 - The design is the "Homebase — Design" doc. Milestones there set the build order.
 
 Hard rules from the design: never bundle or modify `claude`; never read
@@ -36,5 +39,8 @@ There's no CI. Before opening a PR:
 - `cargo clippy --workspace --all-targets` with zero warnings.
 - `cargo test --workspace` passes. The end-to-end tests in
   `crates/hb/tests/cli.rs` run a fake `claude` and need the whole workspace built.
+- `swift build --package-path app` with zero warnings, and
+  `swift test --package-path app` passes.
+- `Scripts/build-app.sh` builds and signs the app.
 - If the CLI changed, `docs/agent-guide.md`, `docs/skill/SKILL.md` and
   `README.md` say the same thing.

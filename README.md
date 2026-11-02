@@ -7,14 +7,15 @@ the Claude desktop app and without a pile of tmux sessions.
 
 - **`hb`**: a command line tool for people, scripts and AI agents.
 - **`hbd`**: a small background agent that owns the server processes.
-- **A macOS menu bar app** (coming in milestone 3): the same controls with a status dot.
+- **A macOS menu bar app**: the same controls at a glance, with a Settings window
+  and a log viewer. It's a client of the agent, so quitting it leaves your servers running.
 
 Homebase isn't affiliated with Anthropic. It runs your own, unmodified `claude`.
 It never bundles Claude Code, never signs in for you and never touches your
 credentials.
 
-> **Status:** early. Milestone 1 (core, agent and CLI) works on macOS. See
-> [Roadmap](#roadmap).
+> **Status:** early. The core, agent, CLI and a first menu bar app work on
+> macOS. See [Roadmap](#roadmap).
 
 ## Requirements
 
@@ -25,14 +26,30 @@ credentials.
 
 ## Install (from source, for now)
 
+You need Rust (`brew install rustup && rustup default stable`) and Xcode 16 or later.
+
 ```sh
 git clone https://github.com/Dev101911/Homebase.git
 cd Homebase
-cargo build --release
-ln -s "$PWD/target/release/hb" ~/.local/bin/hb   # hbd is found next to hb
+Scripts/build-app.sh --open      # builds build/Homebase.app with hb and hbd inside
 ```
 
+Then use **Settings → General → Install the hb Command** to link `hb` into
+`~/.local/bin`. For the CLI alone (a headless Mac), `cargo build --release` and
+link `target/release/hb`. `hbd` is found next to `hb`.
+
 Signed DMG, Homebrew cask and formula come with the 1.0 release.
+
+## The menu bar app
+
+- **Popover:** one row per server with its state, uptime and folder, plus the
+  obvious next action: Start, Stop or Fix. Right-click a row for more.
+- **Settings:** a sidebar of servers and a form for each one. Every field maps
+  to a `claude remote-control` flag, and "Command that runs" shows the exact
+  command line. General holds start at login, the `hb` command and diagnostics.
+- **Log window:** follows a server's log, with Copy and Reveal in Finder.
+- **Fix:** opens Terminal in the server's folder, so you can answer claude's
+  trust question yourself. Homebase never answers it for you.
 
 ## Quick start
 
@@ -105,7 +122,7 @@ Server options map one to one to `claude remote-control` flags: `--spawn`,
 1. **Core + CLI** (this release): `homebase-core`, `hbd` and `hb`.
 2. **Reliability:** restart with backoff, restart on wake and network return,
    keep-awake, start at login from the app.
-3. **Menu bar app:** SwiftUI popover, Settings window, log viewer.
+3. **Menu bar app** (first version in): SwiftUI popover, Settings window, log viewer.
 4. **Public 1.0:** signed and notarized DMG, Sparkle updates, Homebrew.
 5. **Later:** Windows (agent, CLI, then a tray app), tmux import, health
    checks, notifications and groups.
