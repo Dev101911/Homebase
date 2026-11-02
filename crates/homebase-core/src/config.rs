@@ -378,11 +378,8 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("sub/servers.json");
         let mut c = Config::default();
-        c.servers.push(Server::new(
-            "web",
-            "Web",
-            "~/Projects/web-site",
-        ));
+        c.servers
+            .push(Server::new("web", "Web", "~/Projects/web-site"));
         c.save(&path).unwrap();
         assert_eq!(Config::load(&path).unwrap(), c);
         let text = std::fs::read_to_string(&path).unwrap();
